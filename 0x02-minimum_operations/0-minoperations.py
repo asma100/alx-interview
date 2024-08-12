@@ -8,10 +8,16 @@ def minOperations(n):
     """
     This function calculates the minimum number of operations 
     """
-    if n == 0:
+    if n <= 1:
         return 0
-    elif n == 1:
-        return 0
-    x = minOperations(n // 2) + n // 2 
-    y = minOperations(n - (n // 2)) + 1
-    return min(x, y)
+    
+    operations = 0
+    factor = 2
+    
+    while n > 1:
+        while n % factor == 0:
+            operations += factor
+            n //= factor
+        factor += 1
+        
+    return operations
