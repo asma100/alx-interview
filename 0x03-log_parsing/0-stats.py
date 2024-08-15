@@ -1,79 +1,51 @@
-#!/usr/bin/env python3
-"""tasks"""
+#!/usr/bin/python3
+"""
+Log parsing script
+"""
+
 import sys
-import signal
+import re
 
-total_size = 0
-status_codes_count = {
-    "200": 0,
-    "301": 0,
-    "400": 0,
-    "401": 0,
-    "403": 0,
-    "404": 0,
-    "405": 0,
-    "500": 0
-}
-line_count = 0
+def print_statistics(stats: dict) -> None:
+    """
+    Helper function to display statistics
+    """
+    print("File size: {}".format(stats["total_size"]))
+    for status_code in sorted(stats["status_counts"]):
+        if stats["status_counts"][status_code]:
+            print("{}: {}".format(status_code, stats["status_counts"][status_code]))
 
-def print_stats():
-    """Print the accumulated statistics."""
-    print(f"File size: {total_size}")
-    for code in sorted(status_codes_count.keys()):
-        if status_codes_count[code] > 0:
-            print(f"{code}: {status_codes_count[code]}")
+if __name__ == "__main__":
+    # Regular expression to match the log line format
+    log_pattern = re.compile(
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} - \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d+\] "GET /projects/260 HTTP/1.1" (\d{3}) (\d+)'
+    )
 
-def signal_handler(sig, frame):
-    """Handle keyboard interruption and print stats before exiting."""
-    print_stats()
-    sys.exit(0)
+    # Initialize counters and storage
+    line_counter = 0
+    stats = {}
+    stats["total_size"] = 0
+    stats["status_counts"] = {str(code): 0 for code in [200, 301, 400, 401, 403, 404, 405, 500]}
 
-signal.signal(signal.SIGINT, signal_handler)
+    try:
+        for log_line in sys.stdin:
+            log_line = log_line.strip()
+            match = log_pattern.fullmatch(log_line)
+            if match:
+                line_counter += 1
+                status_code = match.group(1)
+                size = int(match.group(2))
 
-try:
-    for line in sys.stdin:
-        try:
-            line = line.strip()
-            if not line:
-                continue
-            
+                # Update total file size
+                stats["total_size"] += size
 
-            parts = line.split()
-            if len(parts) < 9:
-                continue
+                # Update status code count
+                if status_code.isdecimal():
+                    stats["status_counts"][status_code] += 1
 
-            ip_address = parts[0]
-            date = parts[3] + ' ' + parts[4]
-            method = parts[5][1:]
-            path = parts[6]
-            protocol = parts[7][:-1]
-            status_code = parts[8]
-            file_size = parts[9]
+                # Print statistics every 10 lines
+                if line_counter % 10 == 0:
+                    print_statistics(stats)
 
-
-            try:
-                file_size = int(file_size)
-            except ValueError:
-                continue
-
-
-            if method == "GET" and path == "/projects/260" and protocol == "HTTP/1.1":
-
-                total_size += file_size
-
-
-                if status_code in status_codes_count:
-                    status_codes_count[status_code] += 1
-
-                line_count += 1
-
-                if line_count % 10 == 0:
-                    print_stats()
-
-        except Exception as e:
-            continue
-
-except KeyboardInterrupt:
-    pass
-finally:
-    print_stats()
+    finally:
+        print_statistics(stats)
