@@ -5,7 +5,6 @@
 def validUTF8(data):
     """is it valid """
     n_bytes = 0
-
     mask1 = 1 << 7
     mask2 = 1 << 6
     for num in data:
