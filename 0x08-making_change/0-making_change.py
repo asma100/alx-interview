@@ -2,6 +2,7 @@
 """
 task 0
 """
+
 def makeChange(coins, total):
     """minimum number of coins """
     if total <= 0:
