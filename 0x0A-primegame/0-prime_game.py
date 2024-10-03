@@ -3,6 +3,7 @@
 
 
 def sieve_of_eratosthenes(n):
+    """one"""
     sieve = [True] * (n + 1)
     sieve[0] = sieve[1] = False  # 0 and 1 are not prime numbers
     for i in range(2, int(n ** 0.5) + 1):
@@ -13,6 +14,7 @@ def sieve_of_eratosthenes(n):
 
 
 def isWinner(x, nums):
+    """two"""
     if not nums or x < 1:
         return None
     max_num = max(nums)
